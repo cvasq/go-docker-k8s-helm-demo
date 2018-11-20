@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-sql-frontend
+  labels:
+    app: hello-sql
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-sql
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: hello-sql
+        tier: frontend
+    spec:
+      containers:
+      - name: hello-sql
+        image: verifi/hello-sql:cvasquez 
+        ports:
+        - containerPort: 8080
+        env:
+        - name: LISTENING_PORT
+          value: "8080"
+        - name: DB_USER
+          value: "homer"
+        - name: DB_PASSWORD
+          value: "123456"
+        - name: DB_HOST
+          value: "hello-sql-mysql"
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          value: "mysite"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 10

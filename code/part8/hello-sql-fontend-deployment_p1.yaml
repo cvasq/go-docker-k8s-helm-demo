@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-sql-frontend
+  labels:
+    app: hello-sql
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-sql
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: hello-sql
+        tier: frontend
+    spec:
+      containers:
+      - name: hello-sql
+        image: verifi/hello-sql:cvasquez 
+

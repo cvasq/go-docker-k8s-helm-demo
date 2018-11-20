@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-sql-mysql
+  labels:
+    app: hello-sql
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-sql
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: hello-sql
+        tier: database
+    spec:
+      containers:
+      - name: mysql

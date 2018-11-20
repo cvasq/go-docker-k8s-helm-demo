@@ -1,0 +1,41 @@
+replicaCount: 3
+
+image:
+  repository: verifi/hello-sql
+  tag: cvasquez
+  pullPolicy: IfNotPresent
+
+helloSQL:
+  listening_port: 8080
+  db_user: homer
+  db_password: 123456
+  db_port: 3306
+  db_name: mysite
+
+mysql:
+  enabled: true
+  mysqlUser: "homer"
+  mysqlPassword: "123456"
+  mysqlDatabase: mysite
+  repository: mysql
+  tag: 5.7
+  imagePullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  annotations: {}
+  path: /
+  hosts:
+    - hello-sql.local
+  tls: []
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

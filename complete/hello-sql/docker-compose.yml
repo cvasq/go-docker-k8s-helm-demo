@@ -1,0 +1,23 @@
+version: '3'
+services:
+  hello-sql:
+    image: verifi/hello-sql:cvasquez
+    depends_on:
+      - mysql
+    environment:
+      - LISTENING_PORT=8080
+      - DB_USER=homer
+      - DB_PASSWORD=123456
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=mysite
+    ports:
+       - 8080:8080
+  mysql:
+    image: mysql/mysql-server:5.7
+    environment:
+      - MYSQL_USER=homer
+      - MYSQL_PASSWORD=123456
+      - MYSQL_DATABASE=mysite
+    expose:
+      - "3306"

@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: hello-sql-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: hello-sql
+    tier: frontend
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080

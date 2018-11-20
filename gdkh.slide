@@ -1,0 +1,408 @@
+Go | Docker | Kubernetes | Helm
+Introduction
+20 Nov 2018
+Tags: go golang docker helm kubernetes
+
+Carlos Vasquez
+Site Reliability Engineer, Verifi
+
+* Tools
+
+*Go* (a.k.a. Golang) - Statically Typed Programming language by Google
+
+*Docker* - Enables the creation and use of Linux containers
+
+*Docker* *Compose* - Container orchestration tool
+
+*Kubernetes* - Container-orchestration system for automating deployment, scaling and management of containerized applications
+
+*Helm* - Packages templated and version controlled Kubernetes configuration files
+
+* Why Go?
+- Easy installation and maintenance
+- Auto-Formatting
+- Code can run at CLI or compile to static binary (No dependency hell)
+- Clean Documentation (godoc.org, golang.org/pkg/)
+- Docker, Kubernetes, and Helm are written in Go
+
+* Tutorial Tasks Overview
+- Create a simple HTTP web server in Go
+- Run a local MySQL container using Docker
+- Containerize the Go application you created
+- Run the Go app and MySQL container images in Docker using Docker Compose
+- Run the Go app and MySQL container images in Kubernetes using Services and Deployments .yaml files
+- Create and install a Helm chart for the application stack
+.image ./gdhk.png
+
+* Hello SQL
+The Go HTTP server we create will only do two things:
+
+- Return the hostname of the server it's running on
+- Verify it can connect to the MySQL database provided
+
+*Create* *the* *application*
+
+1. Create a directory for your project
+`mkdir` `~/go/src/hello-sql`
+
+2. Create a 'hello-sql.go' file in the new directory
+
+3. Add the basic HTTP server on the next slide
+
+* hello-sql.go
+.code ./code/part1/hello-sql.go
+
+* Set environement variables
+For now, the application only requires a single environement variable, the HTTP listening port
+
+Create a new file 'config.env' and add your environement variable there:
+
+*config.env*
+.code ./code/part1/config.env
+
+Source the file to set the environement variable in your shell
+
+.code ./code/part1/source.sh
+
+* First run
+Do a test run of the application. You should see it come up on port 8080
+`go` `run` `hello-sql.go`
+.image ./code/part1/first_go_run.png
+
+* Load in browser
+.image ./code/part1/first_go_run_browser.png
+
+* Start a local MySQL Docker container
+
+.code ./code/part2/mysql-docker-run.sh
+
+You can verify it's running by launching and attaching to a Bash shell in the container.
+Then use the MySQL client to test the credentials.
+
+.code ./code/part2/mysql-connect-test.sh
+
+* Add a MySQL connection to the hello-sql.go App
+.code ./code/part3/rootHandler_func.go.code
+
+* Update and Install dependencies
+
+Update the 'imports' declaration to reflect the new packages we're using.
+
+.code ./code/part3/imports_update.go
+
+Since we're using a third party package, the Go MySQL driver, we need to install the dependency using 'go get'
+
+`go` `get` `-d` `-v`
+
+or
+
+`go` `get` `-u`  `github.com/go-sql-driver/mysql`
+
+* Run the application to test the connection
+
+Use the 'go run' command to run the application at the CLI
+
+.code ./code/part4/final_test_run.sh
+
+We should see a successfull database connection message
+
+.image ./code/part4/broken_mysql_connection.png
+
+* But....
+
+We dont. Because the DB environement variables are not set
+Update *config.env* with the credentials we used when launching the MySQL container
+.code ./code/part4/config.env
+Set the env variables in the shell and re-run the application. 
+`source` `config.env`
+.image ./code/part4/working_mysql_connection.png
+
+* Dockerize the application
+Our application is working now but requires our local Go installation to run.
+Let's create a Docker image containing our hello-sql.go application.
+Create a new file named *Dockerfile*
+.code ./code/part5/Dockerfile
+
+*FROM* - Sets base container image
+*WORKDIR* - Sets the working directory
+*ADD* - Copies in source code files
+*RUN* - Installs git
+*RUN* - Installs application dependencies
+*RUN* - Builds the application to a static binary file
+*ENTRYPOINT* - Defines how the application should start
+
+* Build and examine the new container image
+Build and tag the container image with your name:
+
+.code ./code/part5/docker-build.sh
+
+Verify the new image exists:
+.code ./code/part5/docker-examine.sh
+
+* 423MB ???
+The resulting container image is pretty large in size for this being a 50 line application.
+We can use the multi-stage feature in the Docker file to optimize the image size.
+Update the *Dockerfile*
+
+.code ./code/part6/Dockerfile
+
+* Basic logging
+Add a log print statment to the rootHandler function in the application for basic request logging
+
+ func rootHandler(w http.ResponseWriter, r *http.Request) {
+         log.Println(r.URL)
+         ...
+
+* Re-build the image
+
+Run the build/tag command again to update the image with the latest version
+
+.code ./code/part6/image_rebuild.sh
+
+Verify new container image size
+.code ./code/part6/image_size_check.sh
+
+* Run the image in Docker using the Docker CLI
+.code ./code/part6/docker_run.sh
+
+You can see it running under *docker* *ps*
+
+.code ./code/part6/docker_ps.sh
+
+Tail the container's application log
+.code ./code/part6/docker_logs.sh
+
+* MySQL connection error
+.image ./code/part6/docker_run_browser.png
+
+* Set up Docker Compose
+Create a new *docker-compose.yaml* file
+.code ./code/part7/docker-compose.yaml
+
+* Run the stack with docker-compose
+.code ./code/part7/docker_compose_run.sh
+
+* Success!
+.image ./code/part7/docker_compose_browser.png
+
+* Deploy to Kubernetes Cluster
+.image ./code/part8/kubernetes_deploy_visual.png
+
+* 
+Deployments represent a set of multiple, identical Pods with no unique identities. 
+
+A Deployment runs multiple replicas of your application and automatically replaces any instances that fail or become unresponsive. 
+In this way, Deployments help ensure that one or more instances of your application are available to serve user requests. 
+
+Deployments are managed by the Kubernetes Deployment controller.
+
+* Define a Deployment for the hello-sql App
+Create a new file: *hello-sql-frontend-deployment.yaml*
+.code ./code/part8/hello-sql-fontend-deployment_p1.yaml
+
+* Continued... 
+.code ./code/part8/hello-sql-fontend-deployment_p2.yaml
+
+* Define a Service for the hello-sql App
+Create a new file: *hello-sql-frontend-service.yaml*
+.code ./code/part8/hello-sql-frontend-service.yaml
+A Kubernetes Service is an abstraction which defines a logical set of Pods and a policy by which to access them.
+
+This service will target pods with the "app:hello-sql" and "tier:frontend" label selectors.
+
+* Define a Deployment for MySQL
+Create a new file: *hello-sql-mysql-deployment.yaml*
+.code ./code/part8/hello-sql-mysql-deployment_p1.yaml
+
+* Continued...
+.code ./code/part8/hello-sql-mysql-deployment_p2.yaml
+
+
+* Define a Service for MySQL 
+Create a new file: *hello-sql-mysql-service.yaml*
+.code ./code/part8/hello-sql-mysql-service.yaml
+
+
+* Create and verify the Kubernetes resources
+.code ./code/part8/create_kubernetes_resources.sh
+.code ./code/part8/verify_kubernetes_resources.sh
+
+* View the logs and examine the resources
+.code ./code/part8/examine_kubernetes_resource.sh
+
+* Access the hello-sql-frontend Service
+Set up a port foward to the hello-sql frontend Service
+.code ./code/part8/port_fwd_hello_mysql_service.sh
+
+.image ./code/part8/browser_connect_service.png
+
+* Helm
+
+* Create a new Helm Chart
+.code ./code/part9/helm_chart_create.sh
+
+* Chart Structure
+Helm provides a predetermined structure to ensure a standard
+
+ hello-sql/
+
+ Chart.yaml            - A YAML file containing information about the chart
+ LICENSE               - OPTIONAL: A plain text file containing the license for the chart
+ README.md             - OPTIONAL: A human-readable README file
+ requirements.yaml     - OPTIONAL: A YAML file listing dependencies for the chart
+ values.yaml           - The default configuration values for this chart
+ charts/               - A directory containing any charts upon which this chart depends.
+ templates/            - A directory of templates that, when combined with values,
+                        will generate valid Kubernetes manifest files.
+ templates/NOTES.txt   - OPTIONAL: A plain text file containing short usage notes
+
+* Enter the Helm chart directory and run helm install:
+ 
+.code ./code/part9/helm_install_default_chart.sh
+
+* Examine the Kubernetes resources created by the default Helm chart
+
+ $ helm ls
+ NAME               REVISION   UPDATED                    STATUS     CHART             APP VERSION     NAMESPACE
+ flippant-tortoise  1          Tue Nov 20 08:43:57 2018   DEPLOYED   hello-sql-0.1.0   1.0             default
+
+ $ kubectl get pods | grep flippant-tortoise
+ flippant-tortoise-hello-sql-64877f5fd6-z72cg               1/1       Running   0          9m
+
+ $ kubectl get services | grep flippant-tortoise
+ flippant-tortoise-hello-sql                 ClusterIP      10.99.212.228    <none>     80/TCP       40m
+
+To access the application, run the commands returned in the NOTES section of the helm install output. 
+This sets up a port forward with kubectl
+
+
+ $ export POD_NAME=$(kubectl get pods --namespace default -l \
+  "app=hello-sql,release=flippant-tortoise" -o jsonpath="{.items[0].metadata.name}")
+
+ $ kubectl port-forward $POD_NAME 8080:80
+ Forwarding from 127.0.0.1:8080 -> 80
+ Forwarding from [::1]:8080 -> 80
+
+* View in browser
+.background ./code/part9/nginx_chart_browser.png
+
+* Configure the Helm chart for our hello-sql Go App
+
+* Add the MySQL dependency to the chart
+Create a *requirements.yaml* file
+
+ dependencies:
+ - name: mysql
+   version: 0.10.1
+   repository: https://kubernetes-charts.storage.googleapis.com
+   condition: mysql.enabled
+
+Install the dependency with *helm* *dependency* *update*
+
+ $ helm dependency update
+
+ Hang tight while we grab the latest from your chart repositories...
+ ...Unable to get an update from the "local" chart repository (http://127.0.0.1:8879/charts):
+         Get http://127.0.0.1:8879/charts/index.yaml: dial tcp 127.0.0.1:8879: connect: connection refused
+ ...Successfully got an update from the "verifi" chart repository
+ ...Successfully got an update from the "stable" chart repository
+ Update Complete. ⎈Happy Helming!⎈
+ Saving 1 charts
+ Downloading mysql from repo https://kubernetes-charts.storage.googleapis.com
+ Deleting outdated charts
+
+* Add our chart configuration to the values.yaml file
+.code ./code/part9/values.yaml
+
+* Update the deployment template to include our environment configuration
+Edit *templates/deployment.yaml*
+.code ./code/part9/deployment.yaml
+
+* Create a helper to link the MySQL dependency
+Append to *templates/_helpers.tpl*
+
+ {{/*
+ Create a default fully qualified app name.
+ We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+ */}}
+ {{- define "hello-sql.mysql.fullname" -}}
+ {{- printf "%s-%s" .Release.Name "mysql" | trunc 63 | trimSuffix "-" -}}
+ {{- end -}}
+This helper makes the MySQL dependency available in the templates as release-name-mysql
+
+* Fix the NOTES.txt file
+The port-forward command in the NOTES.txt is incorrect. Replace it with the correct ports:
+
+Edit *templates/NOTES.txt* second to last line
+
+ kubectl port-forward $POD_NAME 8080:8080
+
+* Run helm install!
+.code ./code/part10/helm_install_hello_sql.sh
+
+* Verify
+
+ $ curl http://localhost:8080/
+ Host: dealing-lightningbug-hello-sql-695fc8c7dc-ndn9p
+ Connected to database!!
+
+or load in the browser
+
+.image ./code/part10/helm_done_browser.png
+
+* Add Ingress to your Kubernetes Cluster
+Install Nginx Ingress chart
+
+ $ helm install stable/nginx-ingress --name ingress-nginx --namespace ingress-nginx 
+
+Verify chart installation
+
+ $ helm ls
+ NAME            REVISION        UPDATED                         STATUS          CHART                   APP VERSION     NAMESPACE
+ ingress-nginx   1               Tue Nov 20 12:53:18 2018        DEPLOYED        nginx-ingress-0.31.0    0.20.0          ingress-nginx
+ rude-jellyfish  2               Tue Nov 20 12:54:25 2018        DEPLOYED        hello-sql-0.1.0         1.0             default
+
+ $ kubectl get pods --namespace=ingress-nginx
+ NAME                                                           READY     STATUS    RESTARTS   AGE
+ ingress-nginx-nginx-ingress-controller-66f6c5d677-xsv9w        1/1       Running   0          7m
+ ingress-nginx-nginx-ingress-default-backend-5f447cbc6b-f6xlt   1/1       Running   0          7m
+
+
+* Configure Ingress in your helm chart
+Edit the *values.yaml* file
+.code ./code/part10/ingress.yaml
+
+You should also increase the replicaCount to 3 in values.yaml file
+
+* Update the deployment by name
+
+ helm upgrade rude-jellyfish .
+
+Verify it was created
+
+ $ kubectl get ingresses
+
+ NAME                       HOSTS                 ADDRESS   PORTS     AGE
+ rude-jellyfish-hello-sql   hello-sql.local                 80        37s
+
+
+
+Show and test ingress
+
+ $ kubectl get ingress
+ NAME                       HOSTS                 ADDRESS   PORTS     AGE
+ rude-jellyfish-hello-sql   hello-sql.local                 80        8m
+
+ $ curl --resolve hello-sql.local:80:127.0.0.1 http://hello-sql.local/
+ Host: rude-jellyfish-hello-sql-6b76768d87-8lzzm
+ Connected to database!!
+
+
+
+
+
+* :wq!
+
+.image ./giphy.gif
+
+

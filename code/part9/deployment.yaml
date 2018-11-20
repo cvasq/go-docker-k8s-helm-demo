@@ -1,0 +1,21 @@
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.helloSQL.listening_port }}
+              protocol: TCP
+          env:
+          - name: LISTENING_PORT
+            value: {{ .Values.helloSQL.listening_port | quote }}
+          - name: DB_USER
+            value: {{ .Values.helloSQL.db_user | quote }}
+          - name: DB_PASSWORD
+            value: {{ .Values.helloSQL.db_password | quote }}
+          - name: DB_HOST
+            value: "{{ template "hello-sql.mysql.fullname" . }}"
+          - name: DB_PORT
+            value: {{ .Values.helloSQL.db_port | quote }}
+          - name: DB_NAME
+            value: {{ .Values.helloSQL.db_name | quote }}
