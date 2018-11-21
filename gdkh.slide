@@ -175,8 +175,7 @@ Tail the container's application log
 * MySQL connection error
 .image ./code/part6/docker_run_browser.png
 
-* Set up Docker Compose
-Create a new *docker-compose.yaml* file
+* Launch the stack with Docker compose. Create a docker-compose.yaml file:
 .code ./code/part7/docker-compose.yaml
 
 * Run the stack with docker-compose
