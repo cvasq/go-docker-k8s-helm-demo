@@ -1,5 +1,5 @@
 # Go | Docker | Kubernetes | Helm 
-## Introduction Demo
+## Introduction Demo Presentation
 
 This repository holds a presentation created with the Go present tool. Presentation available online [here](https://go-talks.appspot.com/github.com/cvasq/go-docker-k8s-helm-demo/gdkh.slide).
 
